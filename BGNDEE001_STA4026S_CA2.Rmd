@@ -6,287 +6,332 @@ output:
 Author: Deevesh Beegun (BGNDEE001)
 ---
 
-#### Question 1\
+<!-- #### Question 1\ -->
 
-```{r, echo=FALSE}
+<!-- ```{r, echo=FALSE} -->
 
-rm(list = ls(all = TRUE))
+<!-- rm(list = ls(all = TRUE)) -->
 
-# Read train, validation and test data 
-dat_train = read.table('Rondebosch21km_2021_Train.txt', h = TRUE)
-dat_val = read.table('Rondebosch21km_2021_Validate.txt', h = TRUE)
-dat_test = read.table('Rondebosch21km_2021_Test.txt', h = TRUE)
+<!-- # Read train, validation and test data  -->
+<!-- dat_train = read.table('Rondebosch21km_2021_Train.txt', h = TRUE) -->
+<!-- dat_val = read.table('Rondebosch21km_2021_Validate.txt', h = TRUE) -->
+<!-- dat_test = read.table('Rondebosch21km_2021_Test.txt', h = TRUE) -->
 
-```
+<!-- ``` -->
 
-$\textbf {(a)}$
+<!-- $\textbf {(a)}$ -->
 
-We perform some exploratory data analysis to gain insights into the relationships between the different variables in the data sets. Firstly, we check if the data sets contain any missing values. After inspecting the datasets we did not find any missing values. We thus proceed to the next step by plotting the distribution of the response variable which is the average speed over the full range distance, Speed_21km and fitting a normal curve to the distribution.
+<!-- We perform some exploratory data analysis to gain insights into the relationships between the different variables in the data sets. Firstly, we check if the data sets contain any missing values. After inspecting the datasets we did not find any missing values. We thus proceed to the next step by plotting the distribution of the response variable which is the average speed over the full range distance, Speed_21km and fitting a normal curve to the distribution. -->
 
-```{r, echo=FALSE}
-is.na(dat_train)
-is.na(dat_val)
-is.na(dat_train)
+<!-- ```{r, echo=FALSE} -->
+<!-- is.na(dat_train) -->
+<!-- is.na(dat_val) -->
+<!-- is.na(dat_train) -->
 
-```
+<!-- ``` -->
 
-```{r}
-h <- hist(dat_train$Speed_21km, breaks = 10, density = 10,
-          col = "blue", xlab = "Speed_21km", main = "Distribution for Average Speed over full range distance.") 
-xfit <- seq(min(dat_train$Speed_21km), max(dat_train$Speed_21km), length = 100) 
-yfit <- dnorm(xfit, mean = mean(dat_train$Speed_21km), sd = sd(dat_train$Speed_21km)) 
-yfit <- yfit * diff(h$mids[1:2]) * length(dat_train$Speed_21km) 
+<!-- ```{r} -->
+<!-- h <- hist(dat_train$Speed_21km, breaks = 10, density = 10, -->
+<!--           col = "blue", xlab = "Speed_21km", main = "Distribution for Average Speed over full range distance.")  -->
+<!-- xfit <- seq(min(dat_train$Speed_21km), max(dat_train$Speed_21km), length = 100)  -->
+<!-- yfit <- dnorm(xfit, mean = mean(dat_train$Speed_21km), sd = sd(dat_train$Speed_21km))  -->
+<!-- yfit <- yfit * diff(h$mids[1:2]) * length(dat_train$Speed_21km)  -->
 
-lines(xfit, yfit, col = "black", lwd = 2)
+<!-- lines(xfit, yfit, col = "black", lwd = 2) -->
 
-```
-The Speed_21km distribution shows that it is slightly skewed to the right which might indicate some outliers in the data set.
+<!-- ``` -->
+<!-- The Speed_21km distribution shows that it is slightly skewed to the right which might indicate some outliers in the data set. -->
 
-$\textbf {(b)}$
+<!-- $\textbf {(b)}$ -->
 
-```{r}
+<!-- ```{r} -->
 
-num_obv_train = dim(dat_train)[1] # Number of observations in train set
-num_obv_val = dim(dat_val)[1] # Number of observations in validation set
-num_obv_test = dim(dat_test)[1] # Number of observations in test set
-
-# Encode the input data in appropriate design matrix
-input_matrix <- model.matrix(~dat_train$Nutrition+dat_train$Age_Scl+dat_train$Sex
-                             +dat_train$ShoeBrand)
-
-output_matrix <- matrix(dat_train$Speed_21km, num_obv_train, 1)
-
-input_matrix_val <- model.matrix(~dat_val$Nutrition+dat_val$Age_Scl+dat_val$Sex
-                                 +dat_val$ShoeBrand)
+<!-- num_obv_train = dim(dat_train)[1] # Number of observations in train set -->
+<!-- num_obv_val = dim(dat_val)[1] # Number of observations in validation set -->
+<!-- num_obv_test = dim(dat_test)[1] # Number of observations in test set -->
 
-output_matrix_val <- matrix(dat_val$Speed_21km, num_obv_val, 1)
+<!-- # Encode the input data in appropriate design matrix -->
+<!-- input_matrix <- model.matrix(~dat_train$Nutrition+dat_train$Age_Scl+dat_train$Sex -->
+<!--                              +dat_train$ShoeBrand) -->
 
-input_matrix_test <- model.matrix(~dat_test$Nutrition+dat_test$Age_Scl
-+dat_test$Sex+dat_test$ShoeBrand)
-
-
-```
+<!-- output_matrix <- matrix(dat_train$Speed_21km, num_obv_train, 1) -->
 
-The expression below gives the mathematical representation of the encoded input vector, $X$ for the all the observations fed into the Neural Network.
+<!-- input_matrix_val <- model.matrix(~dat_val$Nutrition+dat_val$Age_Scl+dat_val$Sex -->
+<!--                                  +dat_val$ShoeBrand) -->
 
-$$
-X = \begin{bmatrix}
-1 & x_{11} & x_{12} & x_{13} \\
-1 & x_{21} & x_{22} & x_{23} \\
-. & . & . & . \\
-. & . & . & . \\
-. & . & . & . \\
-. & . & . & .\\
-1 & x_{n1} & x_{n2} & x_{n3}
-\end{bmatrix}
-$$
-For a single observation, $i$, the input vector, $X_i$ can be represented as follows:
+<!-- output_matrix_val <- matrix(dat_val$Speed_21km, num_obv_val, 1) -->
 
+<!-- input_matrix_test <- model.matrix(~dat_test$Nutrition+dat_test$Age_Scl -->
+<!-- +dat_test$Sex+dat_test$ShoeBrand) -->
 
-$$X_i = \begin{bmatrix} 1 & x_1 & x_2 & x_3 \end{bmatrix}$$
 
-$\textbf {(c)}$
+<!-- ``` -->
 
-```{r}
-# The following functions are activation functions used in the hidden and output 
-# layer respectively. The logistic activation function is used for each node in 
-# the hidden layer (sig_layer1) and the linear activation function is used in 
-# the output layer.
+<!-- The expression below gives the mathematical representation of the encoded input vector, $X$ for the all the observations fed into the Neural Network. -->
 
-# logistic activation function
-sig_layer1 = function(x) 1/(1+exp(-x))
+<!-- $$ -->
+<!-- X = \begin{bmatrix} -->
+<!-- 1 & x_{11} & x_{12} & x_{13} \\ -->
+<!-- 1 & x_{21} & x_{22} & x_{23} \\ -->
+<!-- . & . & . & . \\ -->
+<!-- . & . & . & . \\ -->
+<!-- . & . & . & . \\ -->
+<!-- . & . & . & .\\ -->
+<!-- 1 & x_{n1} & x_{n2} & x_{n3} -->
+<!-- \end{bmatrix} -->
+<!-- $$ -->
+<!-- For a single observation, $i$, the input vector, $X_i$ can be represented as follows: -->
 
-# linear activation function
-sig_layer2 = function(x) x
 
-```
+<!-- $$X_i = \begin{bmatrix} 1 & x_1 & x_2 & x_3 \end{bmatrix}$$ -->
 
+<!-- $\textbf {(c)}$ -->
 
-```{r}
+<!-- ```{r} -->
+<!-- # The following functions are activation functions used in the hidden and output  -->
+<!-- # layer respectively. The logistic activation function is used for each node in  -->
+<!-- # the hidden layer (sig_layer1) and the linear activation function is used in  -->
+<!-- # the output layer. -->
 
-# This function evaluates the updating equation that defines a neural network
-# with a single hidden layer consisting of m hidden nodes each using logistic 
-# function as activation function
-
-# This function takes input as follows:
-# X     - Input matrix (N x p)
-# Y     - Output matrix(N x q)
-# theta - A parameter vector (all of the parameters)
-# m     - Number of nodes on hidden layer
-# lam   - Regularisation parameter
-# data  - The data that the nn model will be trained on
-
-evaluate_neuralNet = function(X, Y, theta, m, lam, data)
-{
-  # Relevant dimensional variables:
-  p = dim(X)[2]
-  q = dim(Y)[2]
-  N = dim(data)[1]
-  
-  # Populate weight-matrix and bias vectors:
-  index = 1:((p-1)*m)
-  W1    = matrix(theta[index],(p-1),m)
-  index = max(index) + 1:(m*q)
-  W2    = matrix(theta[index],m,q)
-  index = max(index) + 1:m
-  b1    = matrix(theta[index],m,1)
-  index = max(index) + 1:q
-  b2    = matrix(theta[index],q,1)
-  
-  # Evaluate network:
-  out   = rep(0,N)
-  error = rep(0,N)
-  for(i in 1:N)
-  {
-    a0 = matrix(X[i,-1],ncol = 1)
-    a1 = sig_layer1(t(W1)%*%a0+b1)
-    a2 = sig_layer2(t(W2)%*%a1+b2)
-    
-    out[i] = a2
-    error[i] = (Y[i]-a2)^2
-  }
-  
-  # Calculate error:
-  E1 = sum(error)/N
-  E2 = E1+lam/N*(sum(W1^2)+sum(W2^2))
-  
-  # Return predictions and error:
-  return(list(out = out, E1 = E1, E2 = E2))
-}
-
-```
-
-We used a linear activation function on the output layer since this is a regression problem, .i.e. the output of the neural network, which is the average speed over the full race distance, is continuous.
-
-For the cost function, we use the mean-squared-error (MSE) to calculate the distance between the prediction and the observed response, hence the overall performance of the model for all training examples. The choice for this function is due to the continuous nature of the output. It can be represented as follows:
-
-$$C_{MSE} = \frac{1}{2N}\sum_{i=1}^{N}(y_i - \hat y_i)^2$$
-where $\hat y_i$ is a one dimensional output from the Neural Network.
-$y_i$ is the expected output for a particular input.
-$N$ is the total number of observations.
-
-To regulate the complexity of the Neural Network an L2 normalization is applied to the model. 
-
-
-
-$\textbf {(d)}$
-
-```{r}
-
-# This function calculates the total number of parameters in the Neural Network
-num_par = function(m, X, Y) {
-  
-  # Relevant dimensional variables:
-  p          = dim(X)[2]
-  q          = dim(Y)[2]
-  npars      = (p-1)*m+m*q+m+q
-  
-  return(npars)
-  
-}
-
-```
-
-
-
-```{r}
-
-obj = function(npars)
-{
-  res = evaluate_neuralNet(input_matrix,output_matrix,npars,m,lambda, data)
-  return(res$E2)
-}
-
-# This function fits a neural network to the above data set. It takes as input
-# the number of nodes in the hidden layer.
-
-fit_neuralNet = function(m) {
-  
-  npars <- num_par(m, input_matrix, output_matrix)
-  
-  M_seq   = 3
-  Val_E   = rep(NA,M_seq) # stores validation error for validation analysis
-  lams    = exp(seq(-10,-3, length =M_seq)) # range of lambda parameters used
-  
-  for(i in 1:M_seq) {
-    
-    # Optimize under constraint corr. lams[i]
-    lambda     = lams[i]
-    theta_rand = runif(npars,0,3)
-    res_opt    = nlm(obj,theta_rand, iterlim = 500) # performs minimization of objective function using Newton-type algorithm
-  
-    res = evaluate_neuralNet(input_matrix_val,output_matrix_val, res_opt$estimate, m, lambda, dat_val) # Evaluates a Neural Net trained on the validation set
-  
-    Val_E[i]   = res$E2
-    
-    print(paste0('Val_Run_',i))
-    
-  }
-  
-   return (list(Val_E=Val_E, lams=lams, res_opt=res_opt))
-  
-}
-
- val_error1 = fit_neuralNet(3) # fit a neural network with a single hidden layer consisting of 3 nodes 
- plot(val_error1$Val_E~val_error1$lams, type = 'l', col = 4, ylim = c(0,max(val_error1$Val_E)), lwd = 3)
-  
- val_error2 = fit_neuralNet(5) # fit a neural network with a single hidden layer consisting of 5 nodes
- lines(val_error2$Val_E~val_error2$lams)
-  #plot(val_error2$Val_E~val_error2$lams, type = 'l', col = 4, ylim = c(0,max(val_error2$Val_E)), lwd = 3)
-
-
-
-# which.min(Val_E)
-# lambda = lams[which.min(Val_E)]
-
-```
-
-$\textbf {(e)}$
-
-
-
-$\textbf {(f)}$
-```{r}
-
-test_neuralNetwork = function(X, theta, m, lam, data)
-{
-  # Relevant dimensional variables:
-  p = dim(X)[2]
-  N = dim(data)[1]
-  
-  # Populate weight-matrix and bias vectors:
-  index = 1:((p-1)*m)
-  W1    = matrix(theta[index],(p-1),m)
-  index = max(index) + 1:(m*1)
-  W2    = matrix(theta[index],m,1)
-  index = max(index) + 1:m
-  b1    = matrix(theta[index],m,1)
-  index = max(index) + 1:1
-  b2    = matrix(theta[index],1,1)
-  
-  # Evaluate network:
-  out   = rep(0,N)
-  for(i in 1:N) {
-    a0 = matrix(X[i,-1],ncol = 1)
-    a1 = sig_layer1(t(W1)%*%a0+b1)
-    a2 = sig_layer2(t(W2)%*%a1+b2)
-    
-    out[i] = a2
-  }
-  
-  # return predictions
-  return (out)
-}
-
-predictions = test_neuralNetwork(input_matrix_test, val_error2$res_opt$estimate, 5, 0.01, dat_test)
-
-print(predictions)
-
-pred = data.frame(predictions = matrix(predictions, ncol=1))
-write.table(pred, 'BGNDEE001_STA4026S_CA2.csv', quote=F, row.names=F, sep = ',')
-
-
-```
+<!-- # logistic activation function -->
+<!-- sig_layer1 = function(x) 1/(1+exp(-x)) -->
+
+<!-- # linear activation function -->
+<!-- sig_layer2 = function(x) x -->
+
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+
+<!-- # This function evaluates the updating equation that defines a neural network -->
+<!-- # with a single hidden layer consisting of m hidden nodes each using logistic  -->
+<!-- # function as activation function -->
+
+<!-- # This function takes input as follows: -->
+<!-- # X     - Input matrix (N x p) -->
+<!-- # Y     - Output matrix(N x q) -->
+<!-- # theta - A parameter vector (all of the parameters) -->
+<!-- # m     - Number of nodes on hidden layer -->
+<!-- # lam   - Regularisation parameter -->
+<!-- # data  - The data that the nn model will be trained on -->
+
+<!-- evaluate_neuralNet = function(X, Y, theta, m, lam, data) -->
+<!-- { -->
+<!--   # Relevant dimensional variables: -->
+<!--   p = dim(X)[2] -->
+<!--   q = dim(Y)[2] -->
+<!--   N = dim(data)[1] -->
+
+<!--   # Populate weight-matrix and bias vectors: -->
+<!--   index = 1:((p-1)*m) -->
+<!--   W1    = matrix(theta[index],(p-1),m) -->
+<!--   index = max(index) + 1:(m*q) -->
+<!--   W2    = matrix(theta[index],m,q) -->
+<!--   index = max(index) + 1:m -->
+<!--   b1    = matrix(theta[index],m,1) -->
+<!--   index = max(index) + 1:q -->
+<!--   b2    = matrix(theta[index],q,1) -->
+
+<!--   # Evaluate network: -->
+<!--   out   = rep(0,N) -->
+<!--   error = rep(0,N) -->
+<!--   for(i in 1:N) -->
+<!--   { -->
+<!--     a0 = matrix(X[i,-1],ncol = 1) -->
+<!--     a1 = sig_layer1(t(W1)%*%a0+b1) -->
+<!--     a2 = sig_layer2(t(W2)%*%a1+b2) -->
+
+<!--     out[i] = a2 -->
+<!--     error[i] = (Y[i]-a2)^2 -->
+<!--   } -->
+
+<!--   # Calculate error: -->
+<!--   E1 = sum(error)/N -->
+<!--   E2 = E1+lam/N*(sum(W1^2)+sum(W2^2)) -->
+
+<!--   # Return predictions and error: -->
+<!--   return(list(out = out, E1 = E1, E2 = E2)) -->
+<!-- } -->
+
+<!-- ``` -->
+
+<!-- We used a linear activation function on the output layer since this is a regression problem, .i.e. the output of the neural network, which is the average speed over the full race distance, is continuous. -->
+
+<!-- For the cost function, we use the mean-squared-error (MSE) to calculate the distance between the prediction and the observed response, hence the overall performance of the model for all training examples. The choice for this function is due to the continuous nature of the output. It can be represented as follows: -->
+
+<!-- $$C_{MSE} = \frac{1}{2N}\sum_{i=1}^{N}(y_i - \hat y_i)^2$$ -->
+<!-- where $\hat y_i$ is a one dimensional output from the Neural Network. -->
+<!-- $y_i$ is the expected output for a particular input. -->
+<!-- $N$ is the total number of observations. -->
+
+<!-- To regulate the complexity of the Neural Network an L2 normalization is applied to the model.  -->
+
+
+
+<!-- $\textbf {(d)}$ -->
+
+<!-- ```{r} -->
+
+<!-- # This function calculates the total number of parameters in the Neural Network -->
+<!-- num_par = function(m, X, Y) { -->
+
+<!--   # Relevant dimensional variables: -->
+<!--   p          = dim(X)[2] -->
+<!--   q          = dim(Y)[2] -->
+<!--   npars      = (p-1)*m+m*q+m+q -->
+
+<!--   return(npars) -->
+
+<!-- } -->
+
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+
+<!-- # This function fits a neural network to the above data set. It takes as input -->
+<!-- # the number of nodes in the hidden layer. -->
+
+<!-- fit_neuralNet = function(hidden_layers) { -->
+
+<!--   m <- hidden_layers -->
+
+<!--   npars <- num_par(hidden_layers, input_matrix, output_matrix) -->
+<!--   M_seq   = 20 -->
+<!--   lams    = exp(seq(-10,-3, length =M_seq)) # range of lambda parameters used -->
+<!--   Val_E   = rep(NA,M_seq) # stores validation error for validation analysis -->
+
+<!--   theta_rand = runif(npars,0,3) -->
+<!--   for(i in 1:M_seq) { -->
+<!--       # Optimize under constraint corr. lams[i] -->
+<!--       lambda     = lams[i] -->
+
+<!--       obj = function(pars) { -->
+<!--         res = evaluate_neuralNet(input_matrix,output_matrix,pars,m,lambda, dat_train) -->
+<!--         return(res$E2) -->
+<!--       } -->
+
+<!--       res_opt    = nlm(obj,theta_rand, iterlim = 500) # performs minimization of objective function using Newton-type algorithm -->
+
+<!--       res = evaluate_neuralNet(input_matrix_val,output_matrix_val, res_opt$estimate, hidden_layers, lambda, dat_val) # Evaluates a Neural Net trained on the validation set -->
+
+<!--       Val_E[i]   = res$E2 -->
+
+<!--       print(paste0('Val_Run_',i)) -->
+
+<!--   } -->
+
+<!--    return (list(Val_E=Val_E, lams=lams, res_opt=res_opt, res = res, m=m)) -->
+
+<!-- } -->
+
+
+
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+<!-- m = 3 -->
+<!-- val_error1 = fit_neuralNet(m) # fit a neural network with a single hidden layer consisting of 3 nodes  -->
+<!-- # plot(val_error1$Val_E~val_error1$lams, type = 'l', col = 4, ylim = c(0,max(val_error1$Val_E)), lwd = 3) -->
+<!-- # val_error2 = fit_neuralNet(5) # fit a neural network with a single hidden layer consisting of 5 nodes -->
+<!-- # plot(val_error2$Val_E~val_error2$lams, type = 'l', col = 4, ylim = c(0,max(val_error2$Val_E)), lwd = 3) -->
+<!-- # lines(val_error1$Val_E~val_error1$lams, col='red') -->
+
+<!-- which.min(val_error1$Val_E) -->
+<!-- lambda = val_error1$lams[which.min(val_error1$Val_E)] -->
+
+<!-- ``` -->
+<!-- $\textbf {(e)}$ -->
+
+<!-- ```{r} -->
+
+<!-- dat_response_male <- dat_train[ which(dat_train$Sex=='Male' & dat_train$ShoeBrand =='Nike' & dat_train$Age_Scl==0.40),] -->
+
+<!-- dat_response_female <- dat_train[ which(dat_train$Sex=='Female' & dat_train$ShoeBrand =='Nike' & dat_train$Age_Scl==0.40),] -->
+
+<!-- input_matrix_male <- model.matrix(~dat_response_male$Nutrition+dat_response_male$Age_Scl) -->
+
+<!-- output_matrix_male <- matrix(dat_response_male$Speed_21km, dim(dat_response_male)[1], 1) -->
+
+<!-- input_matrix_female <- model.matrix(~dat_response_female$Nutrition+dat_response_female$Age_Scl) -->
+
+<!-- output_matrix_female <- matrix(dat_response_female$Speed_21km, dim(dat_response_female)[1], 1) -->
+
+<!-- res_male = evaluate_neuralNet(input_matrix_male, output_matrix_male, val_error1$res_opt$estimate, val_error1$m,  lambda, dat_response_male) -->
+
+<!-- res_female = evaluate_neuralNet(input_matrix_female, output_matrix_female, val_error1$res_opt$estimate, val_error1$m, lambda, dat_response_female) -->
+
+<!-- plot(dat_response_male$Speed_21km~dat_response_male$Nutrition, ylim = c(0,max(dat_response_male$Speed_21km)), lwd = 3, col='blue') -->
+
+
+<!-- points(res_male$out~dat_response_male$Nutrition, ylim = c(0,max(res_male$out)), lwd = 3, col='red') -->
+
+
+<!-- x_lat = seq(min(dat_response_male$Nutrition), max(dat_response_male$Nutrition), 1/20) -->
+
+<!-- X_dummy = cbind(x_lat) -->
+<!-- Y_dummy = X_dummy*0 -->
+<!-- res_resp = evaluate_neuralNet(X_dummy,Y_dummy,val_error1$res_opt$estimate,m,lambda, dat_response_male) -->
+<!-- lines(res_resp$out~x_lat) -->
+<!-- lines(2*sin(3*pi*x_lat)~x_lat, lwd = 2, col ='magenta') -->
+
+<!-- # x1_dummy = seq(min(dat_response_male$Nutrition), max(dat_response_male$Nutrition), length.out = nrow(dat_response_male)) -->
+<!-- #  -->
+<!-- # x2_dummy = seq(min(dat_response_male$Age_Scl), max(dat_response_male$Age_Scl), length.out = ncol(dat_response_male)) -->
+<!-- #  -->
+<!-- # out_mat = matrix(res_male$out, 133) -->
+<!-- #  -->
+<!-- # filled.contour(x1_dummy, x2_dummy, out_mat, xlim = range(dat_train$Nutrition, finite=TRUE), ylim = range(dat_train$Age_Scl, finite=TRUE)) -->
+
+
+
+<!-- ``` -->
+
+
+<!-- $\textbf {(f)}$ -->
+<!-- ```{r} -->
+
+<!-- test_neuralNetwork = function(X, theta, m, lam, data) -->
+<!-- { -->
+<!--   # Relevant dimensional variables: -->
+<!--   p = dim(X)[2] -->
+<!--   N = dim(data)[1] -->
+
+<!--   # Populate weight-matrix and bias vectors: -->
+<!--   index = 1:((p-1)*m) -->
+<!--   W1    = matrix(theta[index],(p-1),m) -->
+<!--   index = max(index) + 1:(m*1) -->
+<!--   W2    = matrix(theta[index],m,1) -->
+<!--   index = max(index) + 1:m -->
+<!--   b1    = matrix(theta[index],m,1) -->
+<!--   index = max(index) + 1:1 -->
+<!--   b2    = matrix(theta[index],1,1) -->
+
+<!--   # Evaluate network: -->
+<!--   out   = rep(0,N) -->
+<!--   for(i in 1:N) { -->
+<!--     a0 = matrix(X[i,-1],ncol = 1) -->
+<!--     a1 = sig_layer1(t(W1)%*%a0+b1) -->
+<!--     a2 = sig_layer2(t(W2)%*%a1+b2) -->
+
+<!--     out[i] = a2 -->
+<!--   } -->
+
+<!--   # return predictions -->
+<!--   return (out) -->
+<!-- } -->
+
+<!-- predictions = test_neuralNetwork(input_matrix_test, val_error1$res_opt$estimate, 3, 0.01, dat_test) -->
+
+<!-- print(predictions) -->
+
+<!-- pred = data.frame(predictions = matrix(predictions, ncol=1)) -->
+<!-- write.table(pred, 'BGNDEE001_STA4026S_CA2.csv', quote=F, row.names=F, sep = ',') -->
+
+
+<!-- ``` -->
 
 
 ####Question 2/
@@ -453,16 +498,16 @@ sig_layer2 = function(x) x
 
 
 ```{r}
-evaluate_neuralNet = function(X, Y, theta, m, lam, data)
+evaluate_neuralNet = function(X, Y, theta, m, lam)
 {
   # Relevant dimensional variables:
   p = dim(X)[2]
   q = dim(Y)[2]
-  N = dim(data)[1]
+  N = dim(X)[1]
   
   # Populate weight-matrix and bias vectors:
-  index = 1:((p-1)*m)
-  W1    = matrix(theta[index],(p-1),m)
+  index = 1:(p*m)
+  W1    = matrix(theta[index],p,m)
   index = max(index) + 1:(m*q)
   W2    = matrix(theta[index],m,q)
   index = max(index) + 1:m
@@ -475,7 +520,7 @@ evaluate_neuralNet = function(X, Y, theta, m, lam, data)
   error = rep(0,N)
   for(i in 1:N)
   {
-    a0 = matrix(X[i,-1],ncol = 1)
+    a0 = matrix(X[i,],ncol = 1)
     a1 = sig_layer1(t(W1)%*%a0+b1)
     a2 = sig_layer2(t(W2)%*%a1+b2)
     
@@ -497,39 +542,73 @@ evaluate_neuralNet = function(X, Y, theta, m, lam, data)
 
 ```{r}
 
-input_vector = X
+input_vector = seq(-1,1,length.out = 50)
+#input_vector = runif(50,-1,1)
+input_vector_mat = matrix(input_vector, ncol = 1)
+
+y = 2*sin(3*pi*input_vector)+e
+Y = matrix(Y, N, 1)
+
+# Set an objective and minimize
+obj = function(pars)
+{
+  res = evaluate_neuralNet(input_vector_mat,Y,pars,m,0)
+  return(res$E1)
+}
+
+res_opt = nlm(obj,theta_rand, iterlim = 250)
+
 
 h     = 0.01
 grad_check = c()
 true_grad = c()
 
 for(k in 1:length(input_vector)) {
-  
-  X_kp = input_vector
-  X_km = input_vector
 
+  X_kp = input_vector_mat
+  X_km = input_vector_mat
+  
   X_kp[k] = X_kp[k]+(h/2)
   X_km[k] = X_km[k]-(h/2)
-
-  res_kp  =  evaluate_neuralNet(X_kp,Y,res_opt$estimate,m,0, input_vector)
-  res_km  =  evaluate_neuralNet(X_km,Y,res_opt$estimate,m,0, input_vector)
   
-  grad_check[k] = (res_kp$out-res_km$out)/h
+  res_kp  =  evaluate_neuralNet(X_kp,Y,res_opt$estimate,m,0)
+  res_km  =  evaluate_neuralNet(X_km,Y,res_opt$estimate,m,0)
+  
+  print(cbind(res_kp$out, res_km$out))
+  
+  grad_check[k] = (res_kp$out[k]-res_km$out[k])/h
   
   true_grad[k] = y.(input_vector[k])
   
 }
 
-tab = cbind(grad_check,true_grad)
 
+plot(grad_check, type = 'h', lwd = 2, ylim=c(-20, 20))
 plot(true_grad, type = 'h', lwd = 2)
-points(true_grad,col = 2,cex = 2)
 
-abs(tab[,2]-tab[,1])
 
 
 
 
 ```
+$\textbf {(b)}$
+
+$\textbf {(c)}$
+
+```{r}
+
+res = neural_net(input_vector_mat,Y,res_opt$estimate,m,0)
+
+plot(res$grad, type = 'h', lwd = 2, ylim=c(-20, 20))
+points(res$grad,col = 2,cex = 2)
+
+
+
+
+```
+
+
+\newpage
+\includepdf[pages=1]{Department of Statistical Sciences - Plagiarism Declaration.pdf}
 
 
